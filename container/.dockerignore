@@ -1,0 +1,41 @@
+# Node modules & dependencies
+node_modules
+npm-debug.log
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+
+# Environment files (never copy secrets!)
+.env
+.env.local
+.env.*.local
+
+# OS & editor junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.log
+
+# Build and output directories
+dist
+build
+coverage
+tmp
+temp
+
+# Docker artifacts
+Dockerfile*
+docker-compose*
+*.tar
+*.img
+
+# Git & version control
+.git
+.gitignore
+.gitattributes
+
+
