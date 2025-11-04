@@ -48,8 +48,6 @@ S3_BUCKET=your-s3-bucket-name
 S3_REGION=us-east-1
 S3_ACCESS_KEY_ID=your-aws-access-key-id
 S3_SECRET_ACCESS_KEY=your-aws-secret-access-key
-REDIS_HOST=localhost
-REDIS_PORT=6379
 KAFKA_BROKER_URL=localhost:9092
 ```
 
