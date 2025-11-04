@@ -1,6 +1,6 @@
 # Video Converter API
 
-A Node.js Express API service for handling multipart uploads to AWS S3, designed specifically for video file uploads with Redis integration for caching and session management.
+A Node.js Express API service for handling multipart uploads to AWS S3, designed specifically for video file uploads with Redis integration for caching and session management. The service now includes asynchronous video transcoding to HLS format using Docker containers and Kafka for event-driven processing.
 
 ## Features
 
@@ -9,6 +9,9 @@ A Node.js Express API service for handling multipart uploads to AWS S3, designed
 - **Redis Integration**: Built-in Redis support for caching and session management
 - **CORS Enabled**: Cross-origin resource sharing configured for web applications
 - **Error Handling**: Comprehensive error handling with detailed error messages
+- **Asynchronous Video Transcoding**: Automatic conversion of uploaded videos to HLS format in multiple resolutions (360p, 720p, 1080p) using Docker containers
+- **Kafka Event-Driven Processing**: Uses Kafka for handling transcoding retries and success events
+- **Docker Containerization**: Transcoding processes run in isolated Docker containers for scalability and reliability
 
 ## Tech Stack
 
@@ -17,6 +20,9 @@ A Node.js Express API service for handling multipart uploads to AWS S3, designed
 - **Cloud Storage**: AWS S3 SDK v3
 - **Caching**: Redis (ioredis)
 - **Database**: MongoDB (via Mongoose - configured for future use)
+- **Message Queue**: Kafka (kafkajs)
+- **Video Processing**: FFmpeg
+- **Containerization**: Docker
 - **Other**: CORS, dotenv for environment management
 
 ## Installation
@@ -44,7 +50,12 @@ S3_ACCESS_KEY_ID=your-aws-access-key-id
 S3_SECRET_ACCESS_KEY=your-aws-secret-access-key
 REDIS_HOST=localhost
 REDIS_PORT=6379
+KAFKA_BROKER_URL=localhost:9092
 ```
+
+4. Ensure Docker is installed and running on your system for video transcoding.
+
+5. Set up Kafka broker and ensure it's accessible at the specified `KAFKA_BROKER_URL`.
 
 ## Usage
 
@@ -258,17 +269,57 @@ Common HTTP status codes:
 ```
 video_converter/
 ├── config/
+│   ├── kafka.js          # Kafka configuration
 │   ├── redis.js          # Redis configuration
 │   └── s3Client.js       # AWS S3 client configuration
+├── container/            # Docker container for video transcoding
+│   ├── Dockerfile        # Docker image configuration
+│   ├── hls.js            # Main transcoding script
+│   ├── helper.js         # FFmpeg command helpers
+│   ├── kafka/            # Kafka utilities for container
+│   │   ├── kafka.js      # Kafka client configuration
+│   │   └── producer.js   # Kafka message producers
+│   ├── index.js          # Alternative transcoding script
+│   ├── package.json      # Container dependencies
+│   └── test.js           # Test script
 ├── controllers/
 │   └── s3_controller.js  # S3 operation handlers
 ├── routes/
 │   ├── index.js          # Main router
 │   └── s3.js             # S3-specific routes
-├── utils/                # Utility functions (if any)
+├── utils/                # Utility functions
+│   ├── createKafkaTopics.js  # Kafka topic creation
+│   ├── kafkaConsumers.js     # Kafka consumers for retries and success
+│   └── runDockerContaner.js  # Docker container runner
 ├── index.js              # Application entry point
 ├── package.json          # Dependencies and scripts
 └── README.md             # This file
+```
+
+## Video Transcoding Workflow
+
+The service implements an asynchronous video transcoding pipeline:
+
+1. **Upload Completion**: When a multipart upload is completed via the API, the service automatically triggers video transcoding.
+2. **Docker Container Launch**: A Docker container is launched with the video key and environment variables for S3 and Kafka access.
+3. **Video Download**: The container downloads the original video from S3.
+4. **HLS Conversion**: FFmpeg is used to convert the video to HLS format in multiple resolutions (360p, 720p, 1080p).
+5. **Output Upload**: Transcoded files and master playlist are uploaded back to S3 under the `__outputs/{key}/` prefix.
+6. **Event Notification**: Success or retry events are sent via Kafka for monitoring and error handling.
+7. **Retry Mechanism**: If transcoding fails, the system automatically retries up to 5 times with exponential backoff.
+
+## Kafka Topics
+
+- `video-transcoding-retry`: Handles retry events for failed transcoding attempts
+- `video-transcoding-success-event`: Notifies successful transcoding completions
+
+## Docker Image
+
+The transcoding container uses a Node.js base image with FFmpeg installed. Build the image with:
+
+```bash
+cd container
+docker build -t video-transcoding .
 ```
 
 ## Contributing
