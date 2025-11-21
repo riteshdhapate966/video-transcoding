@@ -1,1 +1,0 @@
-// docker run --rm  -e S3_REGION=me-south-1  -e S3_ACCESS_KEY_ID=AKIATROPQFPESMINOIRF -e S3_SECRET_ACCESS_KEY=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 -e BUCKET_NAME=presigned-imageuri  -e KEY=a92a9a72-1e4d-4a2c-9888-268a82cdea86 -e KAFKA_BROKER_URL=192.168.0.129:9092 -e VIDEO_RETRY_COUNT=0 --name video-transcoder video-transcoding
